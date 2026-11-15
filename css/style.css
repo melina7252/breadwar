@@ -438,3 +438,17 @@ img.px, canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 #s-battle .tip { max-width: 620px; }
 #s-battle .tip .px { vertical-align: middle; }
 .card .st { margin-top: 0; }
+
+/* ═════════ 레시피 북 탭 / 오븐 강화 ═════════ */
+#s-book .ftabs { position: absolute; left: 72px; top: 58px; margin: 0; z-index: 6; }
+#s-book .shelf { top: 92px; bottom: 34px; }
+#s-book .hint { bottom: 8px; }
+#s-book .arrow { top: 250px; }
+.card.ovencard { background: #ffe9c8; border-color: #7a2e12; box-shadow: inset -4px -5px 0 #e8b070, inset 4px 4px 0 #fff6e6, 0 6px 0 rgba(0,0,0,.4); cursor: default; }
+.card.ovencard:hover { transform: none; }
+.card.ovencard .stars { color: #a8442a; font-size: 12px; }
+.card.ovencard .art { align-items: center; }
+.card .odesc { font-size: 12px; text-align: center; line-height: 1.4; color: var(--ink2); min-height: 34px; }
+.card .oval { font-size: 13px; text-align: center; line-height: 1.5; }
+.card .oval b { color: #2f8a2a; }
+.alist { flex: 1; min-height: 0; }
