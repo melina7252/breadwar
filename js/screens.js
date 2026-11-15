@@ -304,9 +304,9 @@ BW.UI = (() => {
   // ════════ 레시피 북 ════════
   reg('book', {
     enter() {
-      this.filter = this.filter || 'all';
-      this.el.innerHTML = `${topbar('레시피 북', { extra: `<div class="res cnt-box" style="min-width:0"></div>
-          <div class="ftabs"><button class="btn small" data-f="all">전체</button><button class="btn small" data-f="normal">일반 빵</button><button class="btn small" data-f="robot">${S.icon('bolt', 1.1)} 로봇 빵</button></div>` })}
+      this.filter = this.filter || '1';
+      this.el.innerHTML = `${topbar('레시피 북', { extra: `<div class="res cnt-box" style="min-width:0"></div>` })}
+        <div class="ftabs"><button class="btn small" data-f="1">${S.icon('star', 1.1)} 일반</button><button class="btn small" data-f="2">${S.icon('star', 1.1)}${S.icon('star', 1.1)} 희귀</button><button class="btn small" data-f="3">${S.icon('star', 1.1)}${S.icon('star', 1.1)}${S.icon('star', 1.1)} 전설</button><button class="btn small" data-f="oven">${S.icon('flame', 1.2)} 오븐 강화</button></div>
         <button class="btn arrow l">◀</button><button class="btn arrow r">▶</button>
         <div class="shelf"></div><div class="hint outline-text">카드를 눌러 자세히 보기 · 좌우로 스크롤하여 모든 빵을 확인하세요</div>`;
       bindBack(this.el);
@@ -320,7 +320,30 @@ BW.UI = (() => {
     draw() {
       const d = D(), sh = this.el.querySelector('.shelf'), keep = sh.scrollLeft;
       this.el.querySelectorAll('[data-f]').forEach((b) => b.classList.toggle('cream', b.dataset.f !== this.filter));
-      const ids = BW.BREAD_ORDER.filter((id) => this.filter === 'all' || BW.BREADS[id].group === this.filter);
+      this.el.querySelector('.cnt-box').innerHTML = `${S.icon('book', 1.4)} 수집 ${Object.keys(d.owned).length}/${BW.BREAD_ORDER.length}`;
+      this.el.querySelector('.hint').textContent = this.filter === 'oven' ? '골드로 오븐을 강화하면 모든 전투에 적용돼요' : '카드를 눌러 자세히 보기 · 좌우로 스크롤하여 모든 빵을 확인하세요';
+      if (this.filter === 'oven') {
+        // 오븐 강화 카드
+        sh.innerHTML = BW.OVEN_UP.map((u) => {
+          const lv = d.oven[u.id] || 0, max = lv >= u.max, cost = BW.ovenUpCost(lv);
+          return `<div class="card ovencard notch"><div class="stars">오븐 강화</div>
+            <div class="art">${S.img(u.spr, u.sc)}</div>
+            <div class="nm">${u.name}</div><div class="lv ${max ? 'evo' : ''}">Lv.${lv} / ${u.max}</div>
+            <div class="odesc">${u.desc}</div>
+            <div class="oval">${u.fmt(lv)}${max ? '' : `<br>▶ <b>${u.fmt(lv + 1)}</b>`}</div>
+            ${max ? '<button class="btn small dis" disabled>최대 레벨</button>' : `<button class="btn small green" data-ov="${u.id}">강화 ${S.icon('gold', 1.4)}${BW.fmt(cost)}</button>`}</div>`;
+        }).join('');
+        sh.scrollLeft = 0;
+        sh.querySelectorAll('[data-ov]').forEach((b) => (b.onclick = () => {
+          const id = b.dataset.ov, lv = d.oven[id] || 0, cost = BW.ovenUpCost(lv);
+          if (d.gold < cost) { A.sfx.deny(); toast(`골드가 부족해요! (필요: ${BW.fmt(cost)})`); return; }
+          d.gold -= cost; d.oven[id] = lv + 1; SV.save(); refreshRes();
+          A.sfx.upgrade(); toast(`${BW.OVEN_UP.find((x) => x.id === id).name} Lv.${lv + 1} 달성!`);
+          this.draw();
+        }));
+        return;
+      }
+      const ids = BW.BREAD_ORDER.filter((id) => String(BW.BREADS[id].rarity) === this.filter);
       sh.innerHTML = ids.map((id) => {
         const b = BW.BREADS[id], lv = d.owned[id], rb = b.group === 'robot' ? ' robot' : '';
         if (!lv) {
@@ -342,7 +365,6 @@ BW.UI = (() => {
       sh.scrollLeft = keep;
       sh.querySelectorAll('[data-up]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); enhance(b.dataset.up, () => this.draw()); }));
       sh.querySelectorAll('.card[data-id]').forEach((c) => (c.onclick = () => { A.sfx.click(); detail(c.dataset.id, () => this.draw()); }));
-      this.el.querySelector('.cnt-box').innerHTML = `${S.icon('book', 1.4)} 수집 ${Object.keys(d.owned).length}/${BW.BREAD_ORDER.length}`;
     },
     render(c, t) {
       c.drawImage(BW.Scenes.background('river', 5), 0, 0); BW.Scenes.anim(c, 'river', t);
@@ -444,7 +466,7 @@ BW.UI = (() => {
       this.el.querySelector('.pool').innerHTML = BW.BREAD_ORDER.map((id) => {
         const b = BW.BREADS[id], lv = d.owned[id];
         if (!lv) return `<div class="pitem lock"><div style="font-size:40px;margin-bottom:20px">?</div><div>미보유</div></div>`;
-        return `<div class="pitem r${b.rarity} ${d.party.includes(id) ? 'in' : ''} ${BW.matchEls(id, this.els).length ? 'match' : ''}" data-add="${id}" title="${b.trait || ''}"><span class="lvt">Lv.${lv}</span><div class="affs sm">${affTags(id, true)}</div>${S.img(id, bscale(id, 2.8), lv >= BW.EVO_LV)}
+        return `<div class="pitem r${b.rarity} ${d.party.includes(id) ? 'in' : ''} ${BW.matchEls(id, this.els).length ? 'match' : ''}" data-add="${id}" title="${b.trait || ''}"><span class="lvt">Lv.${lv}</span><div class="affs sm">${affTags(id, true)}</div>${S.img(id, bscale(id, 2.4), lv >= BW.EVO_LV)}
           <div class="snm">${bname(id, lv)}</div><div class="cost" style="display:flex;align-items:center;gap:2px">${S.icon('flame', 1.2)}${b.cost}</div></div>`;
       }).join('');
       this.el.querySelectorAll('[data-rm]').forEach((e) => (e.onclick = () => { A.sfx.back(); d.party.splice(+e.dataset.rm, 1); SV.save(); this.draw(); }));

@@ -16,6 +16,7 @@ BW.Save = {
       claimed: {},      // 수령한 도전 과제
       pity: 0,          // 특별 뽑기 천장 카운트
       elSeen: {},       // 안내를 본 속성
+      oven: { hp: 0, fire: 0, start: 0, cannon: 0 },  // 오븐 강화 레벨
       introSeen: false, tutorialSeen: false, sfx: true, music: true,
       stats: { pulls: 0, wins: 0, losses: 0, kills: 0 },
     };
@@ -27,6 +28,7 @@ BW.Save = {
     if (d && d.v === 2) {
       this.data = Object.assign(f, d);
       this.data.stats = Object.assign(this.fresh().stats, d.stats || {});
+      this.data.oven = Object.assign(this.fresh().oven, d.oven || {});
       // 사라진 레시피 정리
       Object.keys(this.data.owned).forEach((id) => { if (!BW.BREADS[id]) delete this.data.owned[id]; });
       this.data.party = this.data.party.filter((id) => this.data.owned[id]);

@@ -237,8 +237,8 @@ BW.BREADS = {
     name: '가디언 식빵', evoName: '가디언 식빵 Mk.II', rarity: 2, group: 'robot',
     desc: '강철 크러스트를 두른 수호 로봇. 에너지 실드가 피해를 대신 받는다.',
     evoDesc: '황금 장갑으로 개수된 2호기. 실드 출력이 대폭 상승했다.',
-    hp: 360, atk: 12, def: 20, cost: 10, spd: 14, aspd: 0.7, range: 12, cd: 13, hw: 8,
-    shield: 0.5, evoUp: { shield: 0.7 }, trait: '에너지 실드: 체력의 50% 보호막, 4초 후 재충전',
+    hp: 300, atk: 11, def: 16, cost: 11, spd: 14, aspd: 0.7, range: 12, cd: 16, hw: 8,
+    shield: 0.3, evoUp: { shield: 0.45 }, trait: '에너지 실드: 체력의 30% 보호막, 6초간 맞지 않으면 재충전',
   },
   laserbaguette: {
     name: '레이저 바게트', evoName: '레이저 바게트 X', rarity: 3, group: 'robot',
@@ -626,3 +626,12 @@ BW.ACH = [
   ['w50', '역전의 용사', '전투 50회 승리', (d) => d.stats.wins, 50, 300, 2000],
 ].map(([id, name, desc, val, goal, flour, gold]) => ({ id, name, desc, val, goal, flour, gold }));
 BW.achReady = (d) => BW.ACH.filter((a) => !d.claimed[a.id] && a.val(d) >= a.goal).length;
+
+// ───── 오븐 강화 (레시피 북 → 오븐 탭, 골드 사용) ─────
+BW.OVEN_UP = [
+  { id: 'hp', name: '오븐 내구도', spr: 'oven', sc: 1.45, max: 10, desc: '벽돌을 덧대어 오븐이 더 오래 버텨요.', fmt: (lv) => `오븐 체력 +${lv * 10}%` },
+  { id: 'fire', name: '화력', spr: 'i_flame', sc: 7, max: 10, desc: '불이 세져서 코스트가 더 빨리 쌓여요.', fmt: (lv) => `코스트 회복 +${lv * 5}%` },
+  { id: 'start', name: '예열', spr: 'i_energy', sc: 7, max: 5, desc: '미리 달궈 두어 시작 코스트가 늘어나요.', fmt: (lv) => `시작 코스트 ${5 + lv * 2}` },
+  { id: 'cannon', name: '오븐 대포', spr: 'i_bolt', sc: 6, max: 10, desc: '대포를 개조해 한 방이 더 강해져요.', fmt: (lv) => `대포 피해 +${lv * 10}%` },
+];
+BW.ovenUpCost = (lv) => 200 + 200 * lv;

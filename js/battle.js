@@ -26,9 +26,13 @@ BW.Battle = class Battle {
     }
     this.t = 0; this.speed = 1; this.paused = false;
     this.over = null; this.endT = 0; this.ended = false;
-    this.cost = 5; this.ovenLv = 1; this.cannon = 0.5;
+    // 오븐 강화 (레시피 북에서 골드로 올리는 영구 강화)
+    const up = opts.ovenUp || (!this.headless && BW.Save.data && BW.Save.data.oven) || {};
+    this.up = { hp: up.hp || 0, fire: up.fire || 0, start: up.start || 0, cannon: up.cannon || 0 };
+    this.cost = 5 + 2 * this.up.start; this.ovenLv = 1; this.cannon = 0.5;
+    const ovenHp = Math.round(this.st.oven * (1 + 0.1 * this.up.hp));
     this.E = { isCastle: true, team: 'e', x: 32, hw: 18, hp: this.st.base, max: this.st.base, dmgT: 0 };
-    this.P = { isCastle: true, team: 'b', x: 444, hw: 22, hp: this.st.oven, max: this.st.oven, dmgT: 0 };
+    this.P = { isCastle: true, team: 'b', x: 444, hw: 22, hp: ovenHp, max: ovenHp, dmgT: 0 };
     this.units = []; this.projs = []; this.parts = []; this.floats = []; this.corpses = [];
     this.spawners = this.st.waves.map((w) => ({ ...w, next: w.t, count: 0 }));
     this.triggers = this.st.triggers.map((tr) => ({ ...tr, done: false }));
@@ -47,7 +51,7 @@ BW.Battle = class Battle {
     this.rp = opts.rp || (this.st.rush && this.st.rush.pow) || 1.3;
   }
 
-  get oven() { return BW.ovenInfo(this.ovenLv); }
+  get oven() { const o = BW.ovenInfo(this.ovenLv); o.rate *= 1 + 0.05 * this.up.fire; return o; }
   sfx(name, ...a) { if (!this.headless) BW.Audio.sfx[name](...a); }
   later(delay, fn) { this.laterQ.push({ at: this.t + delay, fn }); }
   foes(team) { return this.units.filter((u) => u.team !== team && !u.dead); }
@@ -83,7 +87,7 @@ BW.Battle = class Battle {
     this.later(0.3, () => {
       if (this.over) return;
       this.beamT = 0.7; this.shake = 8; this.ovenPop = 0.3;
-      const dmg = 110 + 26 * this.idx;
+      const dmg = Math.round((110 + 26 * this.idx) * (1 + 0.1 * this.up.cannon));
       for (const u of this.units) {
         if (u.team !== 'e' || u.dead || u.x < this.P.x - 330) continue;
         this.hit({ team: 'b', atk: dmg, raw: true }, u, dmg);
@@ -213,7 +217,7 @@ BW.Battle = class Battle {
     d = Math.max(1, Math.round(d * BW.rand(0.9, 1.1)));
     let absorbed = 0;
     if (o.shield > 0) { absorbed = Math.min(o.shield, d); o.shield -= absorbed; d -= absorbed; }
-    if (o.shieldMax) o.shieldT = 4;
+    if (o.shieldMax) o.shieldT = 6;
     o.hp -= d; o.flashT = 0.09; o.hurtT = 0.12;
     if (!this.headless && !src.quiet) {
       const y = this.uy(o) - o.sh + 4 - (o.fly ? 14 : 0);
@@ -447,7 +451,7 @@ BW.Battle = class Battle {
         }
         if (u.dotT <= 0) u.dotDps = 0;
       }
-      if (u.shieldMax && u.shield < u.shieldMax) { u.shieldT -= dt; if (u.shieldT <= 0) u.shield = Math.min(u.shieldMax, u.shield + u.shieldMax * 0.3 * dt); }
+      if (u.shieldMax && u.shield < u.shieldMax) { u.shieldT -= dt; if (u.shieldT <= 0) u.shield = Math.min(u.shieldMax, u.shield + u.shieldMax * 0.15 * dt); }
       if (this.over) { if (u.team === (this.over === 'win' ? 'b' : 'e')) u.state = 'cheer'; continue; }
       if (D.summon) {
         u.summonT -= dt;
